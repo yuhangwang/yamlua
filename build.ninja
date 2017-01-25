@@ -1,0 +1,38 @@
+out_dir = build
+libyaml = /Projects/steven/install/libyaml/0.1.7
+lua = /Projects/steven/install/lua/5.2.4_musl
+lyaml_dir = deps/lyaml
+lyaml_c_dir = deps/c/yaml
+amalg_dir = deps/amalg
+INCLUDE = -I${libyaml}/include -I${lua}/include -I./ext/include
+DEFINE = -DPACKAGE=\"lyaml\" -DVERSION=\"steven\" -DNDEBUG
+cc = musl-gcc
+
+
+rule mkdir
+  command = mkdir -p $out_dir
+
+rule object
+  command = $cc $INCLUDE $DEFINE -c $in -o $out
+
+rule library
+  command = ar rcs $out $in
+
+rule amlag
+  command = ${lua}/bin/lua ${amalg_dir}/amalg.lua $modules -o $out
+
+
+build $out_dir: mkdir 
+
+build ${out_dir}/yaml.o: object ${lyaml_c_dir}/yaml.c
+
+build ${out_dir}/emitter.o: object ${lyaml_c_dir}/emitter.c
+
+build ${out_dir}/scanner.o: object ${lyaml_c_dir}/scanner.c
+
+build ${out_dir}/parser.o: object ${lyaml_c_dir}/parser.c
+
+build ${out_dir}/yaml.a: library ${out_dir}/yaml.o ${out_dir}/emitter.o ${out_dir}/scanner.o ${out_dir}/parser.o
+
+build ${out_dir}/yamlua.lua: amlag 
+  modules = yamlua ${lyaml_dir}/init ${lyaml_dir}/implicit ${lyaml_dir}/explicit ${lyaml_dir}/functional

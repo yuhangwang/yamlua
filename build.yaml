@@ -1,0 +1,62 @@
+const:
+- out_dir: build
+- libyaml: /Projects/steven/install/libyaml/0.1.7
+- lua: /Projects/steven/install/lua/5.2.4_musl
+- lyaml_dir: deps/lyaml
+- lyaml_c_dir: deps/c/yaml
+- amalg_dir: deps/amalg
+- INCLUDE:
+  - -I${libyaml}/include
+  - -I${lua}/include
+  - -I./ext/include
+- DEFINE:
+  - -DPACKAGE=\"lyaml\"
+  - -DVERSION=\"steven\"
+  - -DNDEBUG
+- cc: musl-gcc
+
+rules:
+- mkdir: mkdir -p $out_dir
+- object: $cc $INCLUDE $DEFINE -c $in -o $out
+- library: ar rcs $out $in
+- amlag: ${lua}/bin/lua ${amalg_dir}/amalg.lua $modules -o $out
+
+tasks:
+- out: $out_dir
+  in: ""
+  rule: mkdir
+
+- out: ${out_dir}/yaml.o
+  in: ${lyaml_c_dir}/yaml.c
+  rule: object
+
+- out: ${out_dir}/emitter.o
+  in: ${lyaml_c_dir}/emitter.c
+  rule: object
+
+- out: ${out_dir}/scanner.o
+  in: ${lyaml_c_dir}/scanner.c
+  rule: object
+
+- out: ${out_dir}/parser.o
+  in: ${lyaml_c_dir}/parser.c
+  rule: object
+
+- out: ${out_dir}/yaml.a
+  in:
+  - ${out_dir}/yaml.o
+  - ${out_dir}/emitter.o
+  - ${out_dir}/scanner.o
+  - ${out_dir}/parser.o
+  rule: library
+
+- out: ${out_dir}/yamlua.lua
+  in: ""
+  const:
+  - modules:
+    - yamlua
+    - ${lyaml_dir}/init
+    - ${lyaml_dir}/implicit
+    - ${lyaml_dir}/explicit
+    - ${lyaml_dir}/functional
+  rule: amlag

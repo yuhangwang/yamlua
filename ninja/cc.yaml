@@ -1,0 +1,45 @@
+const:
+- out_dir: build
+- libyaml: /Projects/steven/install/libyaml/0.1.7
+- lua: /Projects/steven/install/lua/5.2.4_musl
+- INCLUDE:
+  - -I${libyaml}/include
+  - -I${lua}/include
+  - -I./ext/include
+- DEFINE:
+  - -DPACKAGE=lyaml
+  - -DNDEBUG
+
+rules:
+- mkdir: mkdir $out_dir
+- cc: musl-gcc $INCLUDE $DEFINE -c $in -o $out
+- combine: ar rcs $out $in
+
+tasks:
+- out: $out_dir
+  in: ""
+  rule: mkdir
+
+- out: ${out_dir}/yaml.o
+  in: ext/yaml/yaml.c
+  rule: cc
+
+- out: ${out_dir}/emitter.o
+  in: ext/yaml/emitter.c
+  rule: cc
+
+- out: ${out_dir}/scanner.o
+  in: ext/yaml/scanner.c
+  rule: cc
+
+- out: ${out_dir}/parser.o
+  in: ext/yaml/parser.c
+  rule: cc
+
+- out: ${out_dir}/yaml.a
+  in:
+  - ${out_dir}/yaml.o
+  - ${out_dir}/emitter.o
+  - ${out_dir}/scanner.o
+  - ${out_dir}/parser.o
+  rule: combine
